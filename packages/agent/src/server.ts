@@ -32,6 +32,14 @@ app.post("/agent/run", async (req, res) => {
     task: string;
     params: Record<string, unknown>;
   };
+
+  if (!task || typeof task !== "string") {
+    return res.status(400).json({ error: "task field required" });
+  }
+  if (!params || typeof params !== "object" || Array.isArray(params)) {
+    return res.status(400).json({ error: "params object required" });
+  }
+
   const agent = createAgent();
 
   switch (task) {

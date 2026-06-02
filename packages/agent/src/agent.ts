@@ -1,10 +1,15 @@
 import "dotenv/config";
-import { HederaAgentKit } from "@hashgraphonline/hedera-agent-kit";
+import { Client, AccountId, PrivateKey } from "@hashgraph/sdk";
 
-export function createAgent(): HederaAgentKit {
-  return new HederaAgentKit({
-    accountId: process.env.HEDERA_ACCOUNT_ID!,
-    privateKey: process.env.HEDERA_PRIVATE_KEY!,
-    network: (process.env.HEDERA_NETWORK as "testnet" | "mainnet") ?? "testnet",
-  });
+export function createClient(): Client {
+  const accountId = AccountId.fromString(process.env.HEDERA_ACCOUNT_ID!);
+  const privateKey = PrivateKey.fromStringDer(process.env.HEDERA_PRIVATE_KEY!);
+
+  const client =
+    process.env.HEDERA_NETWORK === "mainnet"
+      ? Client.forMainnet()
+      : Client.forTestnet();
+
+  client.setOperator(accountId, privateKey);
+  return client;
 }

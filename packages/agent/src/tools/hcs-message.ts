@@ -1,9 +1,14 @@
-import { HederaAgentKit } from "@hashgraphonline/hedera-agent-kit";
+import { Client, TopicMessageSubmitTransaction, TopicId } from "@hashgraph/sdk";
 
 export async function sendHcsMessage(
-  agent: HederaAgentKit,
+  client: Client,
   topicId: string,
   message: string
 ) {
-  return agent.submitMessageToTopic(topicId, message);
+  const tx = await new TopicMessageSubmitTransaction()
+    .setTopicId(TopicId.fromString(topicId))
+    .setMessage(message)
+    .execute(client);
+  const receipt = await tx.getReceipt(client);
+  return { status: receipt.status.toString(), txId: tx.transactionId.toString() };
 }

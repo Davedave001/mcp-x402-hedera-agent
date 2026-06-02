@@ -52,10 +52,32 @@ export function useAgentTask(provider: BrowserProvider | null) {
   return { runTask, result, loading, error };
 }
 
-// Stub — replaced in next commit with real ethers.js signing
 async function fulfillX402Payment(
-  _provider: BrowserProvider,
-  _requirements: X402Requirements
+  provider: BrowserProvider,
+  requirements: X402Requirements
 ): Promise<string> {
-  throw new Error("Payment signing not yet implemented");
+  const accept = requirements.accepts[0];
+  if (!accept) throw new Error("No payment option returned by server");
+
+  const signer = await provider.getSigner();
+
+  // USDC on Base uses ERC-20 transfer. Encode transfer(address,uint256).
+  const iface = new (await import("ethers")).Interface([
+    "function transfer(address to, uint256 amount) returns (bool)",
+  ]);
+  const data = iface.encodeFunctionData("transfer", [
+    accept.payTo,
+    BigInt(accept.amount),
+  ]);
+
+  // USDC contract address on Base mainnet
+  const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+
+  const tx = await signer.sendTransaction({ to: USDC_BASE, data });
+  await tx.wait();
+
+  const receipt = btoa(
+    JSON.stringify({ txHash: tx.hash, network: accept.network, asset: accept.asset })
+  );
+  return receipt;
 }

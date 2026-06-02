@@ -42,17 +42,21 @@ app.post("/agent/run", async (req, res) => {
 
   const agent = createAgent();
 
-  switch (task) {
-    case "get_balance":
-      return res.json({ result: await getBalance(agent, params.accountId as string) });
-    case "transfer_hbar":
-      return res.json({ result: await transferHbar(agent, params.toAccountId as string, Number(params.amount)) });
-    case "send_hcs_message":
-      return res.json({ result: await sendHcsMessage(agent, params.topicId as string, params.message as string) });
-    case "mint_nft":
-      return res.json({ result: await mintNft(agent, params.tokenId as string, params.metadata as Record<string, unknown>) });
-    default:
-      return res.status(400).json({ error: `Unknown task: ${task}` });
+  try {
+    switch (task) {
+      case "get_balance":
+        return res.json({ result: await getBalance(agent, params.accountId as string) });
+      case "transfer_hbar":
+        return res.json({ result: await transferHbar(agent, params.toAccountId as string, Number(params.amount)) });
+      case "send_hcs_message":
+        return res.json({ result: await sendHcsMessage(agent, params.topicId as string, params.message as string) });
+      case "mint_nft":
+        return res.json({ result: await mintNft(agent, params.tokenId as string, params.metadata as Record<string, unknown>) });
+      default:
+        return res.status(400).json({ error: `Unknown task: ${task}` });
+    }
+  } catch (err) {
+    return res.status(500).json({ error: String(err) });
   }
 });
 

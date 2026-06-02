@@ -1,0 +1,12 @@
+{
+  "name": "mcp-x402-hedera-agent",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "agent": "npm run dev --workspace=packages/agent",
+    "ui": "npm run dev --workspace=packages/ui"
+  }
+}

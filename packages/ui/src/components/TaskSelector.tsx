@@ -16,13 +16,13 @@ export const TASKS: Task[] = [
     id: "send_hcs_message",
     label: "Post HCS Message",
     price: "$0.05",
-    params: { topicId: "0.0.5678", message: "Hello from Hedera x402 Agent!" },
+    params: { topicId: "0.0.9146759", message: "Hello from Hedera x402 Agent!" },
   },
   {
     id: "mint_nft",
     label: "Mint NFT",
     price: "$0.25",
-    params: { tokenId: "0.0.9999", metadata: { name: "Hedera x402 NFT", version: "1" } },
+    params: { tokenId: "0.0.9146760", metadata: { name: "Hedera x402 NFT", version: "1" } },
   },
 ];
 

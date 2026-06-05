@@ -2,6 +2,8 @@ import "dotenv/config";
 import express, { type Request, type Response } from "express";
 import cors from "cors";
 import { paymentMiddlewareFromConfig } from "@x402/express";
+import { HTTPFacilitatorClient } from "@x402/core/server";
+import { ExactEvmScheme } from "@x402/evm/exact/server";
 import { createClient } from "./agent.js";
 import { getBalance } from "./tools/balance.js";
 import { transferHbar } from "./tools/transfer.js";
@@ -12,18 +14,24 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const facilitator = new HTTPFacilitatorClient({ url: "https://x402.blocky402.com" });
+
 app.use(
-  paymentMiddlewareFromConfig({
-    "/agent/run": {
-      accepts: {
-        scheme: "exact",
-        payTo: process.env.PAYMENT_RECIPIENT_ADDRESS ?? "",
-        price: "$0.10",
-        network: "eip155:8453",
+  paymentMiddlewareFromConfig(
+    {
+      "/agent/run": {
+        accepts: {
+          scheme: "exact",
+          payTo: process.env.PAYMENT_RECIPIENT_ADDRESS ?? "",
+          price: "$0.10",
+          network: "eip155:8453",
+        },
+        description: "Hedera Agent Task Execution",
       },
-      description: "Hedera Agent Task Execution",
     },
-  })
+    facilitator,
+    [{ network: "eip155:8453", server: new ExactEvmScheme() }]
+  )
 );
 
 app.post("/agent/run", async (req: Request, res: Response) => {

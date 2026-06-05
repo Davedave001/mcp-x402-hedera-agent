@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { BrowserProvider } from "ethers";
+import { BrowserProvider, type Eip1193Provider } from "ethers";
 
 export interface WalletState {
   address: string | null;
@@ -14,7 +14,7 @@ export function useWallet() {
       alert("No EVM wallet detected. Install MetaMask or a compatible wallet.");
       return;
     }
-    const provider = new BrowserProvider(window.ethereum as Parameters<typeof BrowserProvider>[0]);
+    const provider = new BrowserProvider(window.ethereum as Eip1193Provider);
     await provider.send("eth_requestAccounts", []);
     const signer = await provider.getSigner();
     const address = await signer.getAddress();

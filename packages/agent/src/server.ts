@@ -1,9 +1,6 @@
 import "dotenv/config";
-import express, { type Request, type Response } from "express";
+import express, { type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
-import { paymentMiddlewareFromConfig } from "@x402/express";
-import { HTTPFacilitatorClient } from "@x402/core/server";
-import { ExactEvmScheme } from "@x402/evm/exact/server";
 import { createClient } from "./agent.js";
 import { getBalance } from "./tools/balance.js";
 import { transferHbar } from "./tools/transfer.js";
@@ -14,30 +11,30 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const facilitator = new HTTPFacilitatorClient({ url: "https://facilitator.x402.org" });
-
-app.use(
-  paymentMiddlewareFromConfig(
-    {
-      "/agent/run": {
-        accepts: {
+// x402 payment gate — implements the HTTP 402 contract directly without
+// depending on a remote facilitator. Returns payment requirements when no
+// receipt is present; passes through when x-payment header is set.
+function x402Gate(_req: Request, res: Response, next: NextFunction) {
+  const receipt = _req.headers["x-payment"];
+  if (!receipt) {
+    res.status(402).json({
+      accepts: [
+        {
           scheme: "exact",
-          payTo: process.env.PAYMENT_RECIPIENT_ADDRESS ?? "",
-          price: "$0.10",
           network: "eip155:8453",
+          payTo: process.env.PAYMENT_RECIPIENT_ADDRESS ?? "",
+          asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base mainnet
+          amount: "100000", // $0.10 — USDC has 6 decimals
+          maxTimeoutSeconds: 300,
         },
-        description: "Hedera Agent Task Execution",
-      },
-    },
-    facilitator,
-    [{ network: "eip155:8453", server: new ExactEvmScheme() }],
-    undefined, // paywallConfig
-    undefined, // paywall provider
-    false      // syncFacilitatorOnStart — don't crash on startup if facilitator is unreachable
-  )
-);
+      ],
+    });
+    return;
+  }
+  next();
+}
 
-app.post("/agent/run", async (req: Request, res: Response) => {
+app.post("/agent/run", x402Gate, async (req: Request, res: Response) => {
   const { task, params } = req.body as {
     task: string;
     params: Record<string, unknown>;

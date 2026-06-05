@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "tsx src/server.ts",
-    "mcp": "tsx src/mcp-server.ts"
+    "mcp": "tsx src/mcp-server.ts",
+    "setup-demo": "tsx src/setup-demo.ts"
   },
   "dependencies": {
     "@hashgraph/sdk": "2.80.0",

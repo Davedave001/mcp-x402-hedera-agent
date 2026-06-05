@@ -36,8 +36,11 @@ export function useAgentTask(provider: BrowserProvider | null) {
         const paid = await axios.post(
           `${AGENT_URL}/agent/run`,
           { task, params },
-          { headers: { "x-payment": receipt } }
+          { headers: { "x-payment": receipt }, validateStatus: () => true }
         );
+        if (paid.status >= 400) {
+          throw new Error(paid.data?.error ?? `Server error ${paid.status}`);
+        }
         setResult(paid.data);
       } else {
         setResult(probe.data);

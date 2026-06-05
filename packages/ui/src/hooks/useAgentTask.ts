@@ -18,33 +18,43 @@ export function useAgentTask(provider: BrowserProvider | null) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  async function call402Endpoint(
+    endpoint: string,
+    body: Record<string, unknown>
+  ) {
+    const probe = await axios.post(`${AGENT_URL}${endpoint}`, body, {
+      validateStatus: () => true,
+    });
+
+    if (probe.status === 402) {
+      if (!provider) throw new Error("Wallet not connected");
+      const receipt = await fulfillX402Payment(
+        provider,
+        probe.data as X402Requirements
+      );
+      const paid = await axios.post(`${AGENT_URL}${endpoint}`, body, {
+        headers: { "x-payment": receipt },
+        validateStatus: () => true,
+      });
+      if (paid.status >= 400) {
+        throw new Error(paid.data?.error ?? `Server error ${paid.status}`);
+      }
+      return paid.data;
+    }
+
+    if (probe.status >= 400) {
+      throw new Error(probe.data?.error ?? `Server error ${probe.status}`);
+    }
+    return probe.data;
+  }
+
   const runTask = async (task: string, params: Record<string, unknown>) => {
     setLoading(true);
     setError(null);
     setResult(null);
-
     try {
-      const probe = await axios.post(
-        `${AGENT_URL}/agent/run`,
-        { task, params },
-        { validateStatus: () => true }
-      );
-
-      if (probe.status === 402) {
-        if (!provider) throw new Error("Wallet not connected");
-        const receipt = await fulfillX402Payment(provider, probe.data as X402Requirements);
-        const paid = await axios.post(
-          `${AGENT_URL}/agent/run`,
-          { task, params },
-          { headers: { "x-payment": receipt }, validateStatus: () => true }
-        );
-        if (paid.status >= 400) {
-          throw new Error(paid.data?.error ?? `Server error ${paid.status}`);
-        }
-        setResult(paid.data);
-      } else {
-        setResult(probe.data);
-      }
+      const data = await call402Endpoint("/agent/run", { task, params });
+      setResult(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -52,7 +62,21 @@ export function useAgentTask(provider: BrowserProvider | null) {
     }
   };
 
-  return { runTask, result, loading, error };
+  const runReport = async (accountId: string) => {
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    try {
+      const data = await call402Endpoint("/agent/report", { accountId });
+      setResult(data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { runTask, runReport, result, loading, error };
 }
 
 async function fulfillX402Payment(
@@ -64,7 +88,6 @@ async function fulfillX402Payment(
 
   const signer = await provider.getSigner();
 
-  // USDC on Base uses ERC-20 transfer. Encode transfer(address,uint256).
   const iface = new (await import("ethers")).Interface([
     "function transfer(address to, uint256 amount) returns (bool)",
   ]);
@@ -73,14 +96,11 @@ async function fulfillX402Payment(
     BigInt(accept.amount),
   ]);
 
-  // USDC contract address on Base mainnet
   const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
-
   const tx = await signer.sendTransaction({ to: USDC_BASE, data });
   await tx.wait();
 
-  const receipt = btoa(
+  return btoa(
     JSON.stringify({ txHash: tx.hash, network: accept.network, asset: accept.asset })
   );
-  return receipt;
 }

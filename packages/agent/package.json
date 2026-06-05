@@ -12,6 +12,7 @@
     "setup-demo": "tsx src/setup-demo.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.101.0",
     "@hashgraph/sdk": "2.80.0",
     "@modelcontextprotocol/sdk": "^1.12.0",
     "@x402/express": "~2.14.0",

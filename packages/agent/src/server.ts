@@ -14,7 +14,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const facilitator = new HTTPFacilitatorClient({ url: "https://x402.blocky402.com" });
+const facilitator = new HTTPFacilitatorClient({ url: "https://facilitator.x402.org" });
 
 app.use(
   paymentMiddlewareFromConfig(
@@ -30,7 +30,10 @@ app.use(
       },
     },
     facilitator,
-    [{ network: "eip155:8453", server: new ExactEvmScheme() }]
+    [{ network: "eip155:8453", server: new ExactEvmScheme() }],
+    undefined, // paywallConfig
+    undefined, // paywall provider
+    false      // syncFacilitatorOnStart — don't crash on startup if facilitator is unreachable
   )
 );
 

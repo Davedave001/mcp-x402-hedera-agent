@@ -32,13 +32,12 @@ export async function generateWalletReport(
 ): Promise<WalletReport> {
   const balanceData = await getBalance(client, accountId);
 
-  // Convert Long objects to plain numbers
   const tokens: TokenRow[] = balanceData.tokens
-    ? Object.entries(balanceData.tokens).map(([id, val]) => {
-        const v = val as { low: number; high: number; unsigned: boolean };
-        const balance = v.high * 2 ** 32 + v.low;
-        return { id, balance, type: "HTS Token" };
-      })
+    ? Object.entries(balanceData.tokens).map(([id, val]) => ({
+        id,
+        balance: Number(val),
+        type: "HTS Token",
+      }))
     : [];
 
   const tokenLines = tokens

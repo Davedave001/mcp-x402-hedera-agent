@@ -10,7 +10,18 @@ import { generateWalletReport } from "./tools/report.js";
 import { handleChat, type ChatMessage } from "./tools/chat.js";
 
 const app = express();
-app.use(cors());
+
+// Explicit CORS — required for cross-origin browser requests from the UI domain.
+// Covers preflight (OPTIONS) for custom headers like x-payment and x-anthropic-key.
+const corsOptions: cors.CorsOptions = {
+  origin: true,                  // reflect the request origin (allows any domain)
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "x-payment", "x-anthropic-key"],
+  credentials: false,
+  optionsSuccessStatus: 204,
+};
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // handle preflight for every route
 app.use(express.json());
 
 // x402 payment gate factory — returns Express middleware for a given price

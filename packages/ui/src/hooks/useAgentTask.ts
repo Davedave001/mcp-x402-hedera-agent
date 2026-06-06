@@ -48,15 +48,17 @@ export function useAgentTask(provider: BrowserProvider | null) {
     return probe.data;
   }
 
-  const runTask = async (task: string, params: Record<string, unknown>) => {
+  const runTask = async (task: string, params: Record<string, unknown>): Promise<unknown> => {
     setLoading(true);
     setError(null);
     setResult(null);
     try {
       const data = await call402Endpoint("/agent/run", { task, params });
       setResult(data);
+      return data;
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
+      return null;
     } finally {
       setLoading(false);
     }

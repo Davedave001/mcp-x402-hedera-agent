@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { Icon } from "@iconify/react";
 import type { ChatMessage } from "../hooks/useChat";
 
 interface Props {
@@ -39,7 +40,7 @@ export function ChatPanel({ messages, loading, error, onSend, onClear, hasApiKey
       {/* Header */}
       <div className="chat-header">
         <div className="chat-header-left">
-          <div className="chat-avatar">AI</div>
+          <div className="chat-avatar"><Icon icon="mdi:robot-outline" width={18} /></div>
           <div>
             <div className="chat-header-title">Hedera Assistant</div>
             <div className="chat-header-sub">Powered by Claude + Hedera tools</div>
@@ -48,12 +49,12 @@ export function ChatPanel({ messages, loading, error, onSend, onClear, hasApiKey
         <div className="chat-header-actions">
           {!hasApiKey && (
             <button className="chat-key-nudge" onClick={onOpenSettings}>
-              + Add API key — chat free
+              <Icon icon="mdi:key-outline" width={13} /> Add API key — chat free
             </button>
           )}
           {messages.length > 0 && (
             <button className="chat-clear-btn" onClick={onClear} title="Clear conversation">
-              Clear
+              <Icon icon="mdi:delete-sweep-outline" width={14} /> Clear
             </button>
           )}
         </div>
@@ -63,7 +64,7 @@ export function ChatPanel({ messages, loading, error, onSend, onClear, hasApiKey
       <div className="chat-messages">
         {messages.length === 0 && !loading && (
           <div className="chat-empty">
-            <div className="chat-empty-icon">💬</div>
+            <div className="chat-empty-icon"><Icon icon="mdi:chat-question-outline" width={48} /></div>
             <p className="chat-empty-title">Ask me about your wallet</p>
             <p className="chat-empty-hint">Try: "What's the balance of 0.0.6188111?" or "Post a message to HCS topic 0.0.9146759"</p>
             {!hasApiKey && (
@@ -77,20 +78,20 @@ export function ChatPanel({ messages, loading, error, onSend, onClear, hasApiKey
         {messages.map((msg, i) => (
           <div key={i} className={`chat-msg chat-msg-${msg.role}`}>
             {msg.role === "assistant" && (
-              <div className="chat-bubble-avatar">AI</div>
+              <div className="chat-bubble-avatar"><Icon icon="mdi:robot-outline" width={14} /></div>
             )}
             <div className={`chat-bubble chat-bubble-${msg.role}`}>
               <MessageContent content={msg.content} />
             </div>
             {msg.role === "user" && (
-              <div className="chat-bubble-avatar chat-bubble-avatar-user">You</div>
+              <div className="chat-bubble-avatar chat-bubble-avatar-user"><Icon icon="mdi:account" width={14} /></div>
             )}
           </div>
         ))}
 
         {loading && (
           <div className="chat-msg chat-msg-assistant">
-            <div className="chat-bubble-avatar">AI</div>
+            <div className="chat-bubble-avatar"><Icon icon="mdi:robot-outline" width={14} /></div>
             <div className="chat-bubble chat-bubble-assistant chat-bubble-thinking">
               <span className="thinking-dot" />
               <span className="thinking-dot" />
@@ -101,7 +102,7 @@ export function ChatPanel({ messages, loading, error, onSend, onClear, hasApiKey
 
         {error && (
           <div className="chat-error-row">
-            <span className="chat-error-icon">⚠</span>
+            <span className="chat-error-icon"><Icon icon="mdi:alert-outline" width={16} /></span>
             {error}
           </div>
         )}
@@ -126,7 +127,7 @@ export function ChatPanel({ messages, loading, error, onSend, onClear, hasApiKey
           onClick={submit}
           disabled={!draft.trim() || loading}
         >
-          ↑
+          <Icon icon="mdi:send" width={16} />
         </button>
       </div>
     </div>

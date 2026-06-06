@@ -1,3 +1,5 @@
+import { Icon } from "@iconify/react";
+
 export interface Task {
   id: string;
   label: string;
@@ -13,15 +15,15 @@ export const TASKS: Task[] = [
     label: "Get HBAR Balance",
     price: "$0.01",
     color: "green",
-    icon: "$",
-    params: { accountId: "0.0.1234" },
+    icon: "mdi:wallet-outline",
+    params: { accountId: "0.0.6188111" },
   },
   {
     id: "send_hcs_message",
     label: "Post HCS Message",
     price: "$0.05",
     color: "blue",
-    icon: "💬",
+    icon: "mdi:message-text-outline",
     params: { topicId: "0.0.9146759", message: "Hello from Hedera x402 Agent!" },
   },
   {
@@ -29,7 +31,7 @@ export const TASKS: Task[] = [
     label: "Mint NFT",
     price: "$0.25",
     color: "orange",
-    icon: "NFT",
+    icon: "mdi:image-plus-outline",
     params: { tokenId: "0.0.9146760", metadata: { name: "Hedera x402 NFT", version: "1" } },
   },
 ];
@@ -42,11 +44,13 @@ interface Props {
 export function TaskSelector({ disabled, onRun }: Props) {
   return (
     <div className="tools-section">
-      <h3>🔧 Agent Tools</h3>
+      <h3><Icon icon="mdi:tools" width={13} /> Agent Tools</h3>
       <ul className="tool-list">
         {TASKS.map((task) => (
           <li key={task.id} className="tool-card">
-            <div className={`tool-icon ${task.color}`}>{task.icon}</div>
+            <div className={`tool-icon ${task.color}`}>
+              <Icon icon={task.icon} width={18} />
+            </div>
             <div className="tool-info">
               <div className="tool-name">{task.label}</div>
               <div className={`tool-price ${task.color}`}>{task.price}</div>
@@ -56,7 +60,7 @@ export function TaskSelector({ disabled, onRun }: Props) {
               disabled={disabled}
               onClick={() => onRun(task.id, task.params)}
             >
-              ▷ Run
+              <Icon icon="mdi:play" width={13} /> Run
             </button>
           </li>
         ))}

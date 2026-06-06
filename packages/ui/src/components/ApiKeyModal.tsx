@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Icon } from "@iconify/react";
 
 interface Props {
   currentKey: string;
@@ -14,8 +15,8 @@ export function ApiKeyModal({ currentKey, onSave, onClear, onClose }: Props) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <span>⚙ Settings</span>
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <span><Icon icon="mdi:tune-variant" width={15} style={{ verticalAlign: "middle", marginRight: 6 }} />Settings</span>
+          <button className="modal-close" onClick={onClose}><Icon icon="mdi:close" width={16} /></button>
         </div>
 
         <div className="modal-body">
@@ -34,7 +35,8 @@ export function ApiKeyModal({ currentKey, onSave, onClear, onClose }: Props) {
           />
           {currentKey && (
             <p className="modal-active-key">
-              ✓ Key saved — chat is free for you
+              <Icon icon="mdi:check-circle-outline" width={13} style={{ verticalAlign: "middle", marginRight: 4 }} />
+              Key saved — chat is free for you
             </p>
           )}
         </div>

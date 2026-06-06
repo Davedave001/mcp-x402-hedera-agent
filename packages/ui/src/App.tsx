@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Icon } from "@iconify/react";
 import { useWallet } from "./hooks/useWallet";
 import { useAgentTask } from "./hooks/useAgentTask";
 import { useApiKey } from "./hooks/useApiKey";
@@ -52,19 +53,12 @@ export default function App() {
   const handleRun = async (taskId: string, params: Record<string, unknown>) => {
     setPanel({ kind: "loading" });
     try {
-      const AGENT_URL = import.meta.env.VITE_AGENT_URL ?? "http://localhost:3001";
-      const probe = await fetch(`${AGENT_URL}/agent/run`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ task: taskId, params }),
-      });
-      if (probe.status === 402) {
-        await runTask(taskId, params);
-        setPanel({ kind: "tool", data: { note: "check result above" } });
-        return;
+      const data = await runTask(taskId, params);
+      if (data) {
+        setPanel({ kind: "tool", data });
+      } else {
+        setPanel({ kind: "error", message: "Task returned no result" });
       }
-      const data = await probe.json();
-      setPanel({ kind: "tool", data });
     } catch (e) {
       setPanel({ kind: "error", message: e instanceof Error ? e.message : String(e) });
     }
@@ -79,7 +73,8 @@ export default function App() {
           onClick={() => setShowSettings(true)}
           title="Settings"
         >
-          ⚙ {hasKey ? <span className="settings-key-dot" /> : null}
+          <Icon icon="mdi:tune-variant" width={16} />
+          {hasKey ? <span className="settings-key-dot" /> : null}
         </button>
         <WalletConnect address={address} onConnect={connect} onDisconnect={disconnect} />
       </div>
@@ -88,7 +83,7 @@ export default function App() {
         {/* ── Sidebar ── */}
         <aside className="sidebar">
           <div className="app-brand">
-            <div className="brand-icon">H</div>
+            <div className="brand-icon"><Icon icon="simple-icons:hedera" width={20} /></div>
             <div className="brand-text">
               <h1>Hedera x402 Agent</h1>
               <p>Pay-per-use AI agent powered by Hedera + x402</p>
@@ -101,13 +96,13 @@ export default function App() {
               className={`tab-btn ${activeTab === "tools" ? "tab-btn-active" : ""}`}
               onClick={() => setActiveTab("tools")}
             >
-              🔧 Agent Tools
+              <Icon icon="mdi:tools" width={14} /> Agent Tools
             </button>
             <button
               className={`tab-btn ${activeTab === "chat" ? "tab-btn-active" : ""}`}
               onClick={() => setActiveTab("chat")}
             >
-              💬 AI Chat
+              <Icon icon="mdi:chat-outline" width={14} /> AI Chat
             </button>
           </div>
 
@@ -123,7 +118,7 @@ export default function App() {
                   </div>
                 </div>
                 <div className="report-input-row">
-                  <span className="account-icon">👤</span>
+                  <span className="account-icon"><Icon icon="mdi:account-outline" width={16} /></span>
                   <input
                     className="account-input"
                     type="text"
@@ -139,7 +134,7 @@ export default function App() {
                   disabled={!address || panel.kind === "loading" || !reportAccountId}
                   onClick={handleReport}
                 >
-                  ✦ Generate Report
+                  <Icon icon="mdi:sparkles" width={16} /> Generate Report
                 </button>
               </div>
 
@@ -153,7 +148,7 @@ export default function App() {
           {activeTab === "chat" && (
             <div className="chat-sidebar-info">
               <div className="chat-sidebar-row">
-                <span className="chat-sidebar-icon">🤖</span>
+                <span className="chat-sidebar-icon"><Icon icon="mdi:robot-outline" width={20} /></span>
                 <div>
                   <div className="chat-sidebar-label">Claude-powered</div>
                   <div className="chat-sidebar-hint">Ask about balances, transactions, and Hedera operations</div>
@@ -161,13 +156,13 @@ export default function App() {
               </div>
               {hasKey ? (
                 <div className="chat-key-status chat-key-status-ok">
-                  ✓ Your API key is active — chat is free
+                  <Icon icon="mdi:check-circle-outline" width={14} /> Your API key is active — chat is free
                 </div>
               ) : (
                 <div className="chat-key-status chat-key-status-pay">
-                  x402 micropayment per message
+                  <Icon icon="mdi:lightning-bolt" width={14} /> x402 micropayment per message
                   <button className="chat-key-status-link" onClick={() => setShowSettings(true)}>
-                    Add your key to chat free →
+                    Add your key to chat free <Icon icon="mdi:arrow-right" width={12} />
                   </button>
                 </div>
               )}
@@ -191,7 +186,7 @@ export default function App() {
             <>
               {panel.kind === "empty" && (
                 <div className="content-empty">
-                  <div className="content-empty-icon">✦</div>
+                  <div className="content-empty-icon"><Icon icon="mdi:hexagon-outline" width={48} /></div>
                   <p>Connect your wallet and generate a report</p>
                   <p>or run an agent tool to see results here</p>
                 </div>

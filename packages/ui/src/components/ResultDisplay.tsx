@@ -1,3 +1,5 @@
+import { Icon } from "@iconify/react";
+
 interface Props {
   loading: boolean;
   error: string | null;
@@ -38,7 +40,7 @@ export function ResultDisplay({ loading, error, result }: Props) {
   if (error) {
     return (
       <div className="task-result-card task-result-error">
-        <div className="task-result-icon">✕</div>
+        <div className="task-result-icon"><Icon icon="mdi:alert-circle-outline" width={20} /></div>
         <div>
           <div className="task-result-label">Task Failed</div>
           <div className="task-result-message">{error}</div>
@@ -55,7 +57,7 @@ export function ResultDisplay({ loading, error, result }: Props) {
     const tokenEntries = tokens ? Object.entries(tokens) : [];
     return (
       <div className="task-result-card task-result-success">
-        <div className="task-result-icon task-result-icon-green">ℏ</div>
+        <div className="task-result-icon task-result-icon-green"><Icon icon="mdi:wallet-outline" width={20} /></div>
         <div className="task-result-body">
           <div className="task-result-label">HBAR Balance</div>
           <div className="task-result-value">{hbars}</div>
@@ -84,7 +86,7 @@ export function ResultDisplay({ loading, error, result }: Props) {
     const ok = status === "SUCCESS";
     return (
       <div className={`task-result-card ${ok ? "task-result-success" : "task-result-error"}`}>
-        <div className={`task-result-icon ${ok ? "task-result-icon-purple" : ""}`}>NFT</div>
+        <div className={`task-result-icon ${ok ? "task-result-icon-purple" : ""}`}><Icon icon="mdi:image-plus-outline" width={20} /></div>
         <div className="task-result-body">
           <div className="task-result-label">{ok ? "NFT Minted" : `Mint ${status}`}</div>
           {serials.length > 0 && (
@@ -103,7 +105,7 @@ export function ResultDisplay({ loading, error, result }: Props) {
     return (
       <div className={`task-result-card ${ok ? "task-result-success" : "task-result-error"}`}>
         <div className={`task-result-icon ${ok ? "task-result-icon-green" : ""}`}>
-          {ok ? "✓" : "✕"}
+          <Icon icon={ok ? "mdi:check-circle-outline" : "mdi:alert-circle-outline"} width={20} />
         </div>
         <div className="task-result-body">
           <div className="task-result-label">{ok ? "Transaction Complete" : `Transaction ${status}`}</div>
@@ -116,7 +118,7 @@ export function ResultDisplay({ loading, error, result }: Props) {
   // Fallback — structured display (no raw JSON dump)
   return (
     <div className="task-result-card task-result-generic">
-      <div className="task-result-icon">✦</div>
+      <div className="task-result-icon"><Icon icon="mdi:information-outline" width={20} /></div>
       <div className="task-result-body">
         <div className="task-result-label">Result</div>
         <pre className="task-result-pre">{JSON.stringify(result, null, 2)}</pre>

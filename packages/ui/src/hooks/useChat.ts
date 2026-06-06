@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import type { BrowserProvider } from "ethers";
 
-const AGENT_URL = import.meta.env.VITE_AGENT_URL ?? "http://localhost:3001";
+const AGENT_URL = (import.meta.env.VITE_AGENT_URL as string | undefined) ?? "";
 
 export interface ChatMessage {
   role: "user" | "assistant";

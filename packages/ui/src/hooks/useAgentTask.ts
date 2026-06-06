@@ -2,7 +2,9 @@ import { useState } from "react";
 import axios from "axios";
 import type { BrowserProvider } from "ethers";
 
-const AGENT_URL = import.meta.env.VITE_AGENT_URL ?? "http://localhost:3001";
+// Empty string = same origin; nginx proxies /agent/* to the backend.
+// Override with VITE_AGENT_URL at build time for local dev (e.g. http://localhost:3001).
+const AGENT_URL = (import.meta.env.VITE_AGENT_URL as string | undefined) ?? "";
 
 interface X402Requirements {
   accepts: Array<{

@@ -13,7 +13,7 @@ export const TASKS: Task[] = [
   {
     id: "get_balance",
     label: "Get HBAR Balance",
-    price: "$0.01",
+    price: "1 ℏ",
     color: "green",
     icon: "mdi:wallet-outline",
     params: { accountId: "0.0.6188111" },
@@ -21,7 +21,7 @@ export const TASKS: Task[] = [
   {
     id: "send_hcs_message",
     label: "Post HCS Message",
-    price: "$0.05",
+    price: "1 ℏ",
     color: "blue",
     icon: "mdi:message-text-outline",
     params: { topicId: "0.0.9146759", message: "Hello from Hedera x402 Agent!" },
@@ -29,7 +29,7 @@ export const TASKS: Task[] = [
   {
     id: "mint_nft",
     label: "Mint NFT",
-    price: "$0.25",
+    price: "1 ℏ",
     color: "orange",
     icon: "mdi:image-plus-outline",
     params: { tokenId: "0.0.9146760", metadata: { name: "Hedera x402 NFT", version: "1" } },

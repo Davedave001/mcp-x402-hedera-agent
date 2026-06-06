@@ -127,7 +127,7 @@ export default function App() {
                     onChange={(e) => setReportAccountId(e.target.value)}
                     disabled={panel.kind === "loading"}
                   />
-                  <span className="account-price-pill">$0.50</span>
+                  <span className="account-price-pill">2 ℏ</span>
                 </div>
                 <button
                   className="btn-generate"

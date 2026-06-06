@@ -1,6 +1,14 @@
 import { useState, useRef } from "react";
 import { BrowserProvider, type Eip1193Provider } from "ethers";
 
+const HEDERA_TESTNET = {
+  chainId: "0x128",
+  chainName: "Hedera Testnet",
+  nativeCurrency: { name: "HBAR", symbol: "HBAR", decimals: 18 },
+  rpcUrls: ["https://testnet.hashio.io/api"],
+  blockExplorerUrls: ["https://hashscan.io/testnet"],
+};
+
 const AGENT_URL = (import.meta.env.VITE_AGENT_URL as string | undefined) ?? "";
 
 export interface ChatMessage {
@@ -12,21 +20,17 @@ interface X402Requirements {
   accepts: Array<{ network: string; asset: string; amount: string; payTo: string }>;
 }
 
-async function ensureBaseProvider(): Promise<BrowserProvider> {
-  const BASE_CHAIN_ID = "0x2105";
+async function ensureHederaTestnet(): Promise<BrowserProvider> {
   const raw = window.ethereum as Eip1193Provider & { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> };
-  const currentChain = await raw.request({ method: "eth_chainId" }) as string;
-  if (currentChain !== BASE_CHAIN_ID) {
+  const current = await raw.request({ method: "eth_chainId" }) as string;
+  if (current !== HEDERA_TESTNET.chainId) {
     try {
-      await raw.request({ method: "wallet_switchEthereumChain", params: [{ chainId: BASE_CHAIN_ID }] });
+      await raw.request({ method: "wallet_switchEthereumChain", params: [{ chainId: HEDERA_TESTNET.chainId }] });
     } catch (err: unknown) {
       if ((err as { code?: number }).code === 4902) {
-        await raw.request({
-          method: "wallet_addEthereumChain",
-          params: [{ chainId: BASE_CHAIN_ID, chainName: "Base", nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 }, rpcUrls: ["https://mainnet.base.org"], blockExplorerUrls: ["https://basescan.org"] }],
-        });
+        await raw.request({ method: "wallet_addEthereumChain", params: [HEDERA_TESTNET] });
       } else {
-        throw new Error("Please switch your wallet to the Base network to pay.");
+        throw new Error("Please switch your wallet to Hedera Testnet.");
       }
     }
   }
@@ -35,15 +39,15 @@ async function ensureBaseProvider(): Promise<BrowserProvider> {
 
 async function signPayment(_provider: BrowserProvider, req: X402Requirements): Promise<string> {
   const accept = req.accepts[0];
-  const provider = await ensureBaseProvider();
+  const provider = await ensureHederaTestnet();
   const signer = await provider.getSigner();
-  const { Interface } = await import("ethers");
-  const iface = new Interface(["function transfer(address to, uint256 amount) returns (bool)"]);
-  const data = iface.encodeFunctionData("transfer", [accept.payTo, BigInt(accept.amount)]);
-  const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
-  const tx = await signer.sendTransaction({ to: USDC_BASE, data });
+  // Native HBAR transfer — no ERC20 contract needed
+  const tx = await signer.sendTransaction({
+    to: accept.payTo,
+    value: BigInt(accept.amount),
+  });
   await tx.wait();
-  return btoa(JSON.stringify({ txHash: tx.hash, network: accept.network, asset: accept.asset }));
+  return btoa(JSON.stringify({ txHash: tx.hash, network: accept.network, asset: "HBAR" }));
 }
 
 export function useChat(accountId: string, apiKey: string, provider: BrowserProvider | null) {

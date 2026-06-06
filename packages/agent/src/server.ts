@@ -24,8 +24,8 @@ app.use(cors(corsOptions));
 app.options("*", cors(corsOptions)); // handle preflight for every route
 app.use(express.json());
 
-// x402 payment gate factory — returns Express middleware for a given price
-function x402Gate(amount: string, description: string) {
+// x402 payment gate — amounts in weibars (1 HBAR = 10^18 weibars on Hedera EVM)
+function x402Gate(hbarAmount: string, description: string) {
   return (_req: Request, res: Response, next: NextFunction) => {
     const receipt = _req.headers["x-payment"];
     if (!receipt) {
@@ -33,10 +33,10 @@ function x402Gate(amount: string, description: string) {
         accepts: [
           {
             scheme: "exact",
-            network: "eip155:8453",
+            network: "eip155:296",           // Hedera Testnet EVM
             payTo: process.env.PAYMENT_RECIPIENT_ADDRESS ?? "",
-            asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
-            amount,
+            asset: "0x0000000000000000000000000000000000000000", // native HBAR
+            amount: hbarAmount,
             maxTimeoutSeconds: 300,
           },
         ],
@@ -48,10 +48,10 @@ function x402Gate(amount: string, description: string) {
   };
 }
 
-// ── AI Wallet Report — $0.50 ─────────────────────────────────────────────────
+// ── AI Wallet Report — 2 HBAR ────────────────────────────────────────────────
 app.post(
   "/agent/report",
-  x402Gate("500000", "Hedera Wallet Intelligence Report — AI-generated on-chain analysis"),
+  x402Gate("2000000000000000000", "Hedera Wallet Intelligence Report — 2 HBAR"),
   async (req: Request, res: Response) => {
     const { accountId } = req.body as { accountId?: string };
     if (!accountId || typeof accountId !== "string") {
@@ -68,10 +68,10 @@ app.post(
   }
 );
 
-// ── Agent Tool Executor — $0.10 ───────────────────────────────────────────────
+// ── Agent Tool Executor — 1 HBAR ─────────────────────────────────────────────
 app.post(
   "/agent/run",
-  x402Gate("100000", "Hedera Agent Task Execution"),
+  x402Gate("1000000000000000000", "Hedera Agent Task Execution — 1 HBAR"),
   async (req: Request, res: Response) => {
     const { task, params } = req.body as {
       task: string;
@@ -130,14 +130,14 @@ app.post("/agent/chat", async (req: Request, res: Response) => {
         accepts: [
           {
             scheme: "exact",
-            network: "eip155:8453",
+            network: "eip155:296",           // Hedera Testnet EVM
             payTo: process.env.PAYMENT_RECIPIENT_ADDRESS ?? "",
-            asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-            amount: "50000", // $0.05 per message
+            asset: "0x0000000000000000000000000000000000000000", // native HBAR
+            amount: "500000000000000000",    // 0.5 HBAR
             maxTimeoutSeconds: 300,
           },
         ],
-        description: "AI Chat — $0.05 per message, or add your own Anthropic API key in Settings for free",
+        description: "AI Chat — 0.5 HBAR per message, or add your own Anthropic API key for free",
       });
       return;
     }

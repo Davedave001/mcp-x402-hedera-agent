@@ -6,25 +6,30 @@ interface Props {
   result: unknown;
 }
 
-// Known result shapes
-interface BalanceResult  { hbars: string; tokens?: Record<string, string> | null }
+interface BalanceResult  { hbars: string; tokens?: Record<string, unknown> | null }
 interface TxResult       { status: string; txId: string }
 interface MintResult     { status: string; txId: string; serials: string[] }
 
-function isBalanceResult(r: unknown): r is { result: BalanceResult } {
-  return !!r && typeof r === "object" && "result" in r &&
-    typeof (r as { result: unknown }).result === "object" &&
-    "hbars" in (r as { result: BalanceResult }).result;
+// Null-safe guards: typeof null === "object" is true, so we must check !!inner
+function innerOf(r: unknown): object | null {
+  if (!r || typeof r !== "object") return null;
+  if (!("result" in r)) return null;
+  const inner = (r as { result: unknown }).result;
+  if (!inner || typeof inner !== "object") return null;
+  return inner as object;
 }
-function isTxResult(r: unknown): r is { result: TxResult } {
-  return !!r && typeof r === "object" && "result" in r &&
-    typeof (r as { result: unknown }).result === "object" &&
-    "txId" in (r as { result: TxResult }).result;
+
+function isBalanceResult(r: unknown): r is { result: BalanceResult } {
+  const inner = innerOf(r);
+  return inner !== null && "hbars" in inner;
 }
 function isMintResult(r: unknown): r is { result: MintResult } {
-  return !!r && typeof r === "object" && "result" in r &&
-    typeof (r as { result: unknown }).result === "object" &&
-    "serials" in (r as { result: MintResult }).result;
+  const inner = innerOf(r);
+  return inner !== null && "serials" in inner;
+}
+function isTxResult(r: unknown): r is { result: TxResult } {
+  const inner = innerOf(r);
+  return inner !== null && "txId" in inner;
 }
 
 export function ResultDisplay({ loading, error, result }: Props) {
@@ -41,7 +46,7 @@ export function ResultDisplay({ loading, error, result }: Props) {
     return (
       <div className="task-result-card task-result-error">
         <div className="task-result-icon"><Icon icon="mdi:alert-circle-outline" width={20} /></div>
-        <div>
+        <div className="task-result-body">
           <div className="task-result-label">Task Failed</div>
           <div className="task-result-message">{error}</div>
         </div>
@@ -54,20 +59,20 @@ export function ResultDisplay({ loading, error, result }: Props) {
   // Balance
   if (isBalanceResult(result)) {
     const { hbars, tokens } = result.result;
-    const tokenEntries = tokens ? Object.entries(tokens) : [];
+    const tokenEntries = tokens && typeof tokens === "object" ? Object.entries(tokens) : [];
     return (
-      <div className="task-result-card task-result-success">
+      <div className="task-result-card task-result-balance">
         <div className="task-result-icon task-result-icon-green"><Icon icon="mdi:wallet-outline" width={20} /></div>
         <div className="task-result-body">
           <div className="task-result-label">HBAR Balance</div>
-          <div className="task-result-value">{hbars}</div>
+          <div className="task-result-value">{String(hbars)}</div>
           {tokenEntries.length > 0 && (
             <div className="task-result-tokens">
               <div className="task-result-sublabel">Token Holdings</div>
               {tokenEntries.map(([id, bal]) => (
                 <div key={id} className="task-result-token-row">
                   <span className="task-token-id">{id}</span>
-                  <span className="task-token-bal">{bal}</span>
+                  <span className="task-token-bal">{String(bal)}</span>
                 </div>
               ))}
             </div>
@@ -115,7 +120,7 @@ export function ResultDisplay({ loading, error, result }: Props) {
     );
   }
 
-  // Fallback — structured display (no raw JSON dump)
+  // Fallback — structured display
   return (
     <div className="task-result-card task-result-generic">
       <div className="task-result-icon"><Icon icon="mdi:information-outline" width={20} /></div>

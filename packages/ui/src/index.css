@@ -996,9 +996,14 @@ body {
   width: 100%;
 }
 
+.task-result-balance {
+  background: #13131f;
+  border-color: #1e2035;
+}
+
 .task-result-success {
-  background: rgba(16, 185, 129, 0.06);
-  border-color: rgba(16, 185, 129, 0.2);
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.25);
 }
 
 .task-result-error {
@@ -1059,6 +1064,13 @@ body {
   color: #e2e8f0;
   font-family: monospace;
   margin-bottom: 0.25rem;
+}
+
+.task-result-message {
+  font-size: 0.84rem;
+  color: #fca5a5;
+  margin-top: 0.25rem;
+  line-height: 1.5;
 }
 
 .task-result-txid {

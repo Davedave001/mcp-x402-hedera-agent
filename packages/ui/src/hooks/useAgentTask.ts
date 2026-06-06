@@ -1,9 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
-import type { BrowserProvider } from "ethers";
+import { BrowserProvider, type Eip1193Provider } from "ethers";
 
-// Empty string = same origin; nginx proxies /agent/* to the backend.
-// Override with VITE_AGENT_URL at build time for local dev (e.g. http://localhost:3001).
 const AGENT_URL = (import.meta.env.VITE_AGENT_URL as string | undefined) ?? "";
 
 interface X402Requirements {
@@ -85,38 +83,51 @@ export function useAgentTask(provider: BrowserProvider | null) {
   return { runTask, runReport, result, loading, error };
 }
 
-async function switchToBase(provider: BrowserProvider): Promise<void> {
-  const BASE_CHAIN_ID = 8453n;
-  const network = await provider.getNetwork();
-  if (network.chainId === BASE_CHAIN_ID) return;
+// Switches to Base and returns a FRESH provider created after the switch.
+// The old provider instance throws NETWORK_ERROR when the chain changes,
+// so we must re-instantiate from window.ethereum on the new chain.
+async function ensureBaseProvider(): Promise<BrowserProvider> {
+  const BASE_CHAIN_ID = "0x2105"; // 8453
 
-  try {
-    await provider.send("wallet_switchEthereumChain", [{ chainId: "0x2105" }]);
-  } catch (switchErr: unknown) {
-    // Chain not added yet — add it then retry
-    if ((switchErr as { code?: number }).code === 4902) {
-      await provider.send("wallet_addEthereumChain", [{
-        chainId: "0x2105",
-        chainName: "Base",
-        nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-        rpcUrls: ["https://mainnet.base.org"],
-        blockExplorerUrls: ["https://basescan.org"],
-      }]);
-    } else {
-      throw new Error("Please switch your wallet to the Base network to pay.");
+  const raw = window.ethereum as Eip1193Provider & { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> };
+
+  const currentChain = await raw.request({ method: "eth_chainId" }) as string;
+  if (currentChain !== BASE_CHAIN_ID) {
+    try {
+      await raw.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: BASE_CHAIN_ID }],
+      });
+    } catch (err: unknown) {
+      if ((err as { code?: number }).code === 4902) {
+        await raw.request({
+          method: "wallet_addEthereumChain",
+          params: [{
+            chainId: BASE_CHAIN_ID,
+            chainName: "Base",
+            nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+            rpcUrls: ["https://mainnet.base.org"],
+            blockExplorerUrls: ["https://basescan.org"],
+          }],
+        });
+      } else {
+        throw new Error("Please switch your wallet to the Base network to pay.");
+      }
     }
   }
+
+  // Always return a fresh provider — never reuse one created on a different chain
+  return new BrowserProvider(window.ethereum as Eip1193Provider);
 }
 
 async function fulfillX402Payment(
-  provider: BrowserProvider,
+  _provider: BrowserProvider,
   requirements: X402Requirements
 ): Promise<string> {
   const accept = requirements.accepts[0];
   if (!accept) throw new Error("No payment option returned by server");
 
-  await switchToBase(provider);
-
+  const provider = await ensureBaseProvider();
   const signer = await provider.getSigner();
 
   const iface = new (await import("ethers")).Interface([

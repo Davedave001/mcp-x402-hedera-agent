@@ -12,8 +12,29 @@ interface X402Requirements {
   accepts: Array<{ network: string; asset: string; amount: string; payTo: string }>;
 }
 
+async function switchToBase(provider: BrowserProvider): Promise<void> {
+  const network = await provider.getNetwork();
+  if (network.chainId === 8453n) return;
+  try {
+    await provider.send("wallet_switchEthereumChain", [{ chainId: "0x2105" }]);
+  } catch (err: unknown) {
+    if ((err as { code?: number }).code === 4902) {
+      await provider.send("wallet_addEthereumChain", [{
+        chainId: "0x2105",
+        chainName: "Base",
+        nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+        rpcUrls: ["https://mainnet.base.org"],
+        blockExplorerUrls: ["https://basescan.org"],
+      }]);
+    } else {
+      throw new Error("Please switch your wallet to the Base network to pay.");
+    }
+  }
+}
+
 async function signPayment(provider: BrowserProvider, req: X402Requirements): Promise<string> {
   const accept = req.accepts[0];
+  await switchToBase(provider);
   const signer = await provider.getSigner();
   const { Interface } = await import("ethers");
   const iface = new Interface(["function transfer(address to, uint256 amount) returns (bool)"]);

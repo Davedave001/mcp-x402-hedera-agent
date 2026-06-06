@@ -85,12 +85,37 @@ export function useAgentTask(provider: BrowserProvider | null) {
   return { runTask, runReport, result, loading, error };
 }
 
+async function switchToBase(provider: BrowserProvider): Promise<void> {
+  const BASE_CHAIN_ID = 8453n;
+  const network = await provider.getNetwork();
+  if (network.chainId === BASE_CHAIN_ID) return;
+
+  try {
+    await provider.send("wallet_switchEthereumChain", [{ chainId: "0x2105" }]);
+  } catch (switchErr: unknown) {
+    // Chain not added yet — add it then retry
+    if ((switchErr as { code?: number }).code === 4902) {
+      await provider.send("wallet_addEthereumChain", [{
+        chainId: "0x2105",
+        chainName: "Base",
+        nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+        rpcUrls: ["https://mainnet.base.org"],
+        blockExplorerUrls: ["https://basescan.org"],
+      }]);
+    } else {
+      throw new Error("Please switch your wallet to the Base network to pay.");
+    }
+  }
+}
+
 async function fulfillX402Payment(
   provider: BrowserProvider,
   requirements: X402Requirements
 ): Promise<string> {
   const accept = requirements.accepts[0];
   if (!accept) throw new Error("No payment option returned by server");
+
+  await switchToBase(provider);
 
   const signer = await provider.getSigner();
 

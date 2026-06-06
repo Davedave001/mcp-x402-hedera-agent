@@ -10,8 +10,7 @@ COPY . .
 # Bake the agent URL into the bundle at build time.
 # nginx also proxies /agent/* as a fallback for same-origin requests.
 # Set VITE_AGENT_URL as a Build Argument in Coolify to the HTTPS agent URL.
-# Empty = same-origin relative URLs; nginx proxy forwards to the agent
-ARG VITE_AGENT_URL=""
+ARG VITE_AGENT_URL=https://api-mcp-x402-hedera-agent.agentikiq.com
 ENV VITE_AGENT_URL=${VITE_AGENT_URL}
 
 RUN npm run build

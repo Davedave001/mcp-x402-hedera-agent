@@ -62,15 +62,17 @@ export function useAgentTask(provider: BrowserProvider | null) {
     }
   };
 
-  const runReport = async (accountId: string) => {
+  const runReport = async (accountId: string): Promise<unknown> => {
     setLoading(true);
     setError(null);
     setResult(null);
     try {
       const data = await call402Endpoint("/agent/report", { accountId });
       setResult(data);
+      return data;
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
+      return null;
     } finally {
       setLoading(false);
     }

@@ -4,50 +4,111 @@ import { getBalance } from "./balance.js";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-export async function generateWalletReport(client: Client, accountId: string) {
-  // 1. Pull live on-chain data via Hedera Agent Kit tools
+export interface TokenRow {
+  id: string;
+  balance: number;
+  type: string;
+}
+
+export interface ReportAnalysis {
+  accountHealth: { status: "HEALTHY" | "AT_RISK" | "INACTIVE"; description: string };
+  tokenPortfolio: { tokens: TokenRow[]; totalUnits: number; summary: string };
+  activityAssessment: string;
+  insights: { title: string; description: string }[];
+  disclaimer: string;
+}
+
+export interface WalletReport {
+  accountId: string;
+  generatedAt: string;
+  hbars: string;
+  tokens: TokenRow[];
+  analysis: ReportAnalysis;
+}
+
+export async function generateWalletReport(
+  client: Client,
+  accountId: string
+): Promise<WalletReport> {
   const balanceData = await getBalance(client, accountId);
 
-  const tokenCount = balanceData.tokens
-    ? Object.keys(balanceData.tokens).length
-    : 0;
+  // Convert Long objects to plain numbers
+  const tokens: TokenRow[] = balanceData.tokens
+    ? Object.entries(balanceData.tokens).map(([id, val]) => {
+        const v = val as { low: number; high: number; unsigned: boolean };
+        const balance = v.high * 2 ** 32 + v.low;
+        return { id, balance, type: "HTS Token" };
+      })
+    : [];
 
-  const onChainContext = `
-Hedera Account: ${accountId}
+  const tokenLines = tokens
+    .map((t) => `  ${t.id}: ${t.balance} units`)
+    .join("\n");
+
+  const onChainContext = `Account: ${accountId}
 HBAR Balance: ${balanceData.hbars}
-Token Holdings: ${tokenCount} token type(s)
-${
-  tokenCount > 0
-    ? "Token details: " + JSON.stringify(balanceData.tokens, null, 2)
-    : "No token holdings detected."
-}
+Token holdings (${tokens.length}):
+${tokenLines || "  None"}
 Network: Hedera Testnet
-Data fetched: ${new Date().toISOString()}
-  `.trim();
+Timestamp: ${new Date().toISOString()}`;
 
-  // 2. Generate AI report using Claude
   const message = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 1024,
     messages: [
       {
         role: "user",
-        content: `You are a Hedera blockchain analyst. Generate a concise, insightful wallet intelligence report for the following on-chain data. Include: account health, token portfolio summary, activity assessment, and 2-3 actionable insights. Keep it professional and under 300 words.
+        content: `You are a Hedera blockchain analyst. Analyse the data below and return ONLY valid JSON — no markdown, no code fences.
 
-On-chain data:
+Required shape:
+{
+  "accountHealth": { "status": "HEALTHY"|"AT_RISK"|"INACTIVE", "description": "2-3 sentences" },
+  "tokenPortfolio": {
+    "tokens": [{ "id": "0.0.X", "balance": 123, "type": "HTS Token"|"NFT" }],
+    "totalUnits": 0,
+    "summary": "1-2 sentences"
+  },
+  "activityAssessment": "2-3 sentences",
+  "insights": [
+    { "title": "Short title", "description": "1-2 sentences" },
+    { "title": "Short title", "description": "1-2 sentences" },
+    { "title": "Short title", "description": "1-2 sentences" }
+  ],
+  "disclaimer": "Report based on Hedera Testnet snapshot data. Not financial advice."
+}
+
+Rules: exactly 3 insights, totalUnits = sum of all balances, mark tokens with balance ≤ 10 as NFT type.
+
+Data:
 ${onChainContext}`,
       },
     ],
   });
 
-  const reportText =
-    message.content[0].type === "text" ? message.content[0].text : "";
+  const raw =
+    message.content[0].type === "text" ? message.content[0].text.trim() : "{}";
 
-  return {
-    accountId,
-    generatedAt: new Date().toISOString(),
-    onChainData: balanceData,
-    report: reportText,
-    model: "claude-sonnet-4-6",
-  };
+  let analysis: ReportAnalysis;
+  try {
+    analysis = JSON.parse(raw);
+    // Merge real token data into portfolio so IDs are always accurate
+    analysis.tokenPortfolio.tokens = tokens.map((t) => ({
+      ...t,
+      type: t.balance <= 10 ? "NFT" : "HTS Token",
+    }));
+    analysis.tokenPortfolio.totalUnits = tokens.reduce(
+      (sum, t) => sum + t.balance,
+      0
+    );
+  } catch {
+    analysis = {
+      accountHealth: { status: "HEALTHY", description: raw },
+      tokenPortfolio: { tokens, totalUnits: 0, summary: "" },
+      activityAssessment: "",
+      insights: [],
+      disclaimer: "Report based on Hedera Testnet snapshot data. Not financial advice.",
+    };
+  }
+
+  return { accountId, generatedAt: new Date().toISOString(), hbars: balanceData.hbars, tokens, analysis };
 }

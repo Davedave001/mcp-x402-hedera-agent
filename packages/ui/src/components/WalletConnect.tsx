@@ -7,20 +7,19 @@ interface Props {
 export function WalletConnect({ address, onConnect, onDisconnect }: Props) {
   if (!address) {
     return (
-      <button className="btn-primary" onClick={onConnect}>
+      <button className="btn-connect" onClick={onConnect}>
         Connect Wallet
       </button>
     );
   }
-
   return (
-    <div className="wallet-info">
-      <span className="wallet-address">
+    <>
+      <span className="wallet-address-pill">
         {address.slice(0, 6)}…{address.slice(-4)}
       </span>
-      <button className="btn-secondary" onClick={onDisconnect}>
+      <button className="btn-disconnect" onClick={onDisconnect}>
         Disconnect
       </button>
-    </div>
+    </>
   );
 }

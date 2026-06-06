@@ -13,9 +13,7 @@ export function ResultDisplay({ loading, error, result }: Props) {
   }
   if (result !== null && result !== undefined) {
     return (
-      <pre className="result-box">
-        {JSON.stringify(result, null, 2)}
-      </pre>
+      <pre className="result-box">{JSON.stringify(result, null, 2)}</pre>
     );
   }
   return null;

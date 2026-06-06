@@ -2,6 +2,8 @@ export interface Task {
   id: string;
   label: string;
   price: string;
+  color: "green" | "blue" | "orange";
+  icon: string;
   params: Record<string, unknown>;
 }
 
@@ -10,18 +12,24 @@ export const TASKS: Task[] = [
     id: "get_balance",
     label: "Get HBAR Balance",
     price: "$0.01",
+    color: "green",
+    icon: "$",
     params: { accountId: "0.0.1234" },
   },
   {
     id: "send_hcs_message",
     label: "Post HCS Message",
     price: "$0.05",
+    color: "blue",
+    icon: "💬",
     params: { topicId: "0.0.9146759", message: "Hello from Hedera x402 Agent!" },
   },
   {
     id: "mint_nft",
     label: "Mint NFT",
     price: "$0.25",
+    color: "orange",
+    icon: "NFT",
     params: { tokenId: "0.0.9146760", metadata: { name: "Hedera x402 NFT", version: "1" } },
   },
 ];
@@ -33,22 +41,26 @@ interface Props {
 
 export function TaskSelector({ disabled, onRun }: Props) {
   return (
-    <ul className="task-list">
-      {TASKS.map((task) => (
-        <li key={task.id} className="task-item">
-          <div className="task-info">
-            <span className="task-label">{task.label}</span>
-            <span className="task-price">{task.price}</span>
-          </div>
-          <button
-            className="btn-primary"
-            disabled={disabled}
-            onClick={() => onRun(task.id, task.params)}
-          >
-            Run
-          </button>
-        </li>
-      ))}
-    </ul>
+    <div className="tools-section">
+      <h3>🔧 Agent Tools</h3>
+      <ul className="tool-list">
+        {TASKS.map((task) => (
+          <li key={task.id} className="tool-card">
+            <div className={`tool-icon ${task.color}`}>{task.icon}</div>
+            <div className="tool-info">
+              <div className="tool-name">{task.label}</div>
+              <div className={`tool-price ${task.color}`}>{task.price}</div>
+            </div>
+            <button
+              className="btn-run"
+              disabled={disabled}
+              onClick={() => onRun(task.id, task.params)}
+            >
+              ▷ Run
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

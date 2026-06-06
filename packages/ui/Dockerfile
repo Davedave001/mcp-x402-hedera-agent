@@ -15,14 +15,13 @@ RUN npm run build
 
 # ── Stage 2: serve with nginx ────────────────────────────────
 FROM nginx:alpine
+
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf.template /etc/nginx/conf.d/default.conf.template
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
-# At container start, substitute AGENT_BACKEND_URL into the nginx config,
-# then launch nginx. Only ${AGENT_BACKEND_URL} is replaced — nginx's own
-# $variables (like $uri, $http_host) are left untouched.
-CMD ["/bin/sh", "-c", \
-  "envsubst '${AGENT_BACKEND_URL}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf \
-  && nginx -g 'daemon off;'"]
-
+# AGENT_BACKEND_URL must be set as a container environment variable.
+# The entrypoint substitutes it into nginx.conf.template at startup.
 EXPOSE 80
+ENTRYPOINT ["/docker-entrypoint.sh"]

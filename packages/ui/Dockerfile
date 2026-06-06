@@ -7,7 +7,6 @@ RUN npm install
 
 COPY . .
 
-# VITE_ vars baked at build time — leave empty; nginx proxy handles routing
 ARG VITE_AGENT_URL=""
 ENV VITE_AGENT_URL=$VITE_AGENT_URL
 
@@ -18,10 +17,14 @@ FROM nginx:alpine
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf.template /etc/nginx/conf.d/default.conf.template
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
 
-# AGENT_BACKEND_URL must be set as a container environment variable.
-# The entrypoint substitutes it into nginx.conf.template at startup.
+# Bake the agent backend URL into nginx.conf at build time.
+# Default points to the Coolify-internal agent URL.
+# Override with --build-arg AGENT_BACKEND_URL=... if it ever changes.
+ARG AGENT_BACKEND_URL=http://pw8wwc0gkc0w880w8w4gscsc.72.62.37.229.sslip.io
+RUN envsubst '${AGENT_BACKEND_URL}' \
+      < /etc/nginx/conf.d/default.conf.template \
+      > /etc/nginx/conf.d/default.conf
+
 EXPOSE 80
-ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]
